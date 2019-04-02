@@ -21,7 +21,7 @@ import (
 	"github.com/urfave/cli"
 	kcp "github.com/xtaci/kcp-go"
 	"github.com/xtaci/smux"
-	"github.com/ccsexyz/kcp-go-raw"
+	"github.com/biotooff/kcp-go-raw"
 )
 
 var (
