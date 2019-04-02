@@ -21,6 +21,7 @@ import (
 	"github.com/urfave/cli"
 	kcp "github.com/xtaci/kcp-go"
 	"github.com/xtaci/smux"
+	"github.com/ccsexyz/kcp-go-raw"
 )
 
 var (
@@ -345,7 +346,12 @@ func main() {
 			block, _ = kcp.NewAESBlockCrypt(pass)
 		}
 
-		lis, err := kcp.ListenWithOptions(config.Listen, block, config.DataShard, config.ParityShard)
+		kcpraw.SetDSCP(config.DSCP)
+		kcpraw.SetNoHTTP(true)
+		kcpraw.SetMixed(false)
+		kcpraw.SetIgnRST(false)
+
+		lis, err := kcpraw.ListenWithOptions(config.Listen, block, config.DataShard, config.ParityShard,config.Key,false,false)
 		checkError(err)
 		log.Println("listening on:", lis.Addr())
 		log.Println("target:", config.Target)

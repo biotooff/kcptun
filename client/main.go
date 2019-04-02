@@ -18,7 +18,7 @@ import (
 	"github.com/urfave/cli"
 	kcp "github.com/xtaci/kcp-go"
 	"github.com/xtaci/smux"
-
+	"github.com/ccsexyz/kcp-go-raw"
 	"path/filepath"
 )
 
@@ -361,8 +361,13 @@ func main() {
 		smuxConfig.MaxReceiveBuffer = config.SmuxBuf
 		smuxConfig.KeepAliveInterval = time.Duration(config.KeepAlive) * time.Second
 
+		kcpraw.SetDSCP(config.DSCP)
+		kcpraw.SetNoHTTP(true)
+		kcpraw.SetIgnRST(false)
+		kcpraw.SetDummy(true)
+
 		createConn := func() (*smux.Session, error) {
-			kcpconn, err := kcp.DialWithOptions(config.RemoteAddr, block, config.DataShard, config.ParityShard)
+			kcpconn, err := kcpraw.DialWithOptions(config.RemoteAddr, block, config.DataShard, config.ParityShard, config.Key, 0, false)
 			if err != nil {
 				return nil, errors.Wrap(err, "createConn()")
 			}
@@ -373,15 +378,15 @@ func main() {
 			kcpconn.SetMtu(config.MTU)
 			kcpconn.SetACKNoDelay(config.AckNodelay)
 
-			if err := kcpconn.SetDSCP(config.DSCP); err != nil {
-				log.Println("SetDSCP:", err)
-			}
-			if err := kcpconn.SetReadBuffer(config.SockBuf); err != nil {
-				log.Println("SetReadBuffer:", err)
-			}
-			if err := kcpconn.SetWriteBuffer(config.SockBuf); err != nil {
-				log.Println("SetWriteBuffer:", err)
-			}
+			// if err := kcpconn.SetDSCP(config.DSCP); err != nil {
+			// 	log.Println("SetDSCP:", err)
+			// }
+			// if err := kcpconn.SetReadBuffer(config.SockBuf); err != nil {
+			// 	log.Println("SetReadBuffer:", err)
+			// }
+			// if err := kcpconn.SetWriteBuffer(config.SockBuf); err != nil {
+			// 	log.Println("SetWriteBuffer:", err)
+			// }
 
 			// stream multiplex
 			var session *smux.Session
