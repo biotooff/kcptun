@@ -351,7 +351,7 @@ func main() {
 		kcpraw.SetMixed(false)
 		kcpraw.SetIgnRST(false)
 
-		lis, err := kcpraw.ListenWithOptions(config.Listen, block, config.DataShard, config.ParityShard,config.Key,false,false)
+		lis, err := kcpraw.ListenWithOptions(config.Listen, block, config.DataShard, config.ParityShard,false)
 		checkError(err)
 		log.Println("listening on:", lis.Addr())
 		log.Println("target:", config.Target)

@@ -367,7 +367,7 @@ func main() {
 		kcpraw.SetDummy(true)
 
 		createConn := func() (*smux.Session, error) {
-			kcpconn, err := kcpraw.DialWithOptions(config.RemoteAddr, block, config.DataShard, config.ParityShard, config.Key, 0, false)
+			kcpconn, err := kcpraw.DialWithOptions(config.RemoteAddr, block, config.DataShard, config.ParityShard, false)
 			if err != nil {
 				return nil, errors.Wrap(err, "createConn()")
 			}
