@@ -89,10 +89,10 @@ func handleMux(conn io.ReadWriteCloser, config *Config) {
 }
 
 func handleClient(p1, p2 io.ReadWriteCloser, quiet bool) {
-	if !quiet {
-		log.Println("stream opened")
-		defer log.Println("stream closed")
-	}
+	// if !quiet {
+	// 	log.Println("stream opened")
+	// 	defer log.Println("stream closed")
+	// }
 	defer p1.Close()
 	defer p2.Close()
 
@@ -371,15 +371,15 @@ func main() {
 		log.Println("pprof:", config.Pprof)
 		log.Println("quiet:", config.Quiet)
 
-		if err := lis.SetDSCP(config.DSCP); err != nil {
-			log.Println("SetDSCP:", err)
-		}
-		if err := lis.SetReadBuffer(config.SockBuf); err != nil {
-			log.Println("SetReadBuffer:", err)
-		}
-		if err := lis.SetWriteBuffer(config.SockBuf); err != nil {
-			log.Println("SetWriteBuffer:", err)
-		}
+		// if err := lis.SetDSCP(config.DSCP); err != nil {
+		// 	log.Println("SetDSCP:", err)
+		// }
+		// if err := lis.SetReadBuffer(config.SockBuf); err != nil {
+		// 	log.Println("SetReadBuffer:", err)
+		// }
+		// if err := lis.SetWriteBuffer(config.SockBuf); err != nil {
+		// 	log.Println("SetWriteBuffer:", err)
+		// }
 
 		go snmpLogger(config.SnmpLog, config.SnmpPeriod)
 		if config.Pprof {

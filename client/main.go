@@ -58,10 +58,10 @@ func newCompStream(conn net.Conn) *compStream {
 }
 
 func handleClient(sess *smux.Session, p1 io.ReadWriteCloser, quiet bool) {
-	if !quiet {
-		log.Println("stream opened")
-		defer log.Println("stream closed")
-	}
+	// if !quiet {
+	// 	log.Println("stream opened")
+	// 	defer log.Println("stream closed")
+	// }
 
 	defer p1.Close()
 	p2, err := sess.OpenStream()
@@ -80,9 +80,14 @@ func handleClient(sess *smux.Session, p1 io.ReadWriteCloser, quiet bool) {
 		return die
 	}
 
+	d1:=streamCopy(p1, p2)
+	d2:=streamCopy(p2, p1)
+
 	select {
-	case <-streamCopy(p1, p2):
-	case <-streamCopy(p2, p1):
+	case <-d1:
+	}
+	select {
+	case <-d2:
 	}
 }
 
