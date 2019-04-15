@@ -17,7 +17,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 	kcp "github.com/xtaci/kcp-go"
-	"github.com/xtaci/smux"
+	"github.com/biotooff/smux"
 	"github.com/biotooff/kcp-go-raw"
 	"path/filepath"
 )
