@@ -8,8 +8,6 @@ import (
 	"log"
 	"math/rand"
 	"net"
-	"net/http"
-	_ "net/http/pprof"
 	"os"
 	"time"
 
@@ -385,9 +383,9 @@ func main() {
 		// }
 
 		go snmpLogger(config.SnmpLog, config.SnmpPeriod)
-		if config.Pprof {
-			go http.ListenAndServe(":6060", nil)
-		}
+		//if config.Pprof {
+			//go http.ListenAndServe(":6060", nil)
+		//}
 
 		for {
 			if conn, err := lis.AcceptKCP(); err == nil {
