@@ -397,10 +397,16 @@ func main() {
 				conn.SetWindowSize(config.SndWnd, config.RcvWnd)
 				conn.SetACKNoDelay(config.AckNodelay)
 
+				conn2Target, err := net.Dial("tcp", config.Target)
+				if err != nil {
+					log.Println(err)
+					return err
+				}
+
 				if config.NoComp {
-					go handleMux(conn, &config)
+					go handleClient(conn, conn2Target,true)
 				} else {
-					go handleMux(newCompStream(conn), &config)
+					go handleClient(newCompStream(conn), conn2Target,true)
 				}
 			} else {
 				log.Printf("%+v", err)
