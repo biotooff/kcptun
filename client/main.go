@@ -17,7 +17,6 @@ import (
 	"github.com/pkg/errors"
 	"github.com/urfave/cli"
 	kcp "github.com/xtaci/kcp-go"
-	"github.com/xtaci/smux"
 	"github.com/biotooff/kcp-go-raw"
 	"path/filepath"
 )
@@ -57,39 +56,6 @@ func newCompStream(conn net.Conn) *compStream {
 	return c
 }
 
-func handleClient(sess *smux.Session, p1 io.ReadWriteCloser, quiet bool) {
-	// if !quiet {
-	// 	log.Println("stream opened")
-	// 	defer log.Println("stream closed")
-	// }
-
-	defer p1.Close()
-	p2, err := sess.OpenStream()
-	if err != nil {
-		return
-	}
-	defer p2.Close()
-
-	// start tunnel & wait for tunnel termination
-	streamCopy := func(dst io.Writer, src io.Reader) chan struct{} {
-		die := make(chan struct{})
-		go func() {
-			io.CopyBuffer(dst, src, make([]byte, 65535))
-			close(die)
-		}()
-		return die
-	}
-
-	d1:=streamCopy(p1, p2)
-	d2:=streamCopy(p2, p1)
-
-	select {
-	case <-d1:
-	}
-	select {
-	case <-d2:
-	}
-}
 
 func handleClientSingleStream(p2 io.ReadWriteCloser, p1 io.ReadWriteCloser) {
 
@@ -132,7 +98,7 @@ func main() {
 	}
 	myApp := cli.NewApp()
 	myApp.Name = "kcptun"
-	myApp.Usage = "client(with SMUX)"
+	myApp.Usage = "client(single stream)"
 	myApp.Version = VERSION
 	myApp.Flags = []cli.Flag{
 		cli.StringFlag{
@@ -241,11 +207,6 @@ func main() {
 			Usage: "per-socket buffer in bytes",
 		},
 		cli.IntFlag{
-			Name:  "smuxbuf",
-			Value: 4194304,
-			Usage: "the overall de-mux buffer in bytes",
-		},
-		cli.IntFlag{
 			Name:  "keepalive",
 			Value: 10, // nat keepalive interval in seconds
 			Usage: "seconds between heartbeats",
@@ -298,7 +259,6 @@ func main() {
 		config.Resend = c.Int("resend")
 		config.NoCongestion = c.Int("nc")
 		config.SockBuf = c.Int("sockbuf")
-		config.SmuxBuf = c.Int("smuxbuf")
 		config.KeepAlive = c.Int("keepalive")
 		config.Log = c.String("log")
 		config.SnmpLog = c.String("snmplog")
@@ -379,7 +339,6 @@ func main() {
 		log.Println("acknodelay:", config.AckNodelay)
 		log.Println("dscp:", config.DSCP)
 		log.Println("sockbuf:", config.SockBuf)
-		log.Println("smuxbuf:", config.SmuxBuf)
 		log.Println("keepalive:", config.KeepAlive)
 		log.Println("conn:", config.Conn)
 		log.Println("autoexpire:", config.AutoExpire)
@@ -387,10 +346,6 @@ func main() {
 		log.Println("snmplog:", config.SnmpLog)
 		log.Println("snmpperiod:", config.SnmpPeriod)
 		log.Println("quiet:", config.Quiet)
-
-		smuxConfig := smux.DefaultConfig()
-		smuxConfig.MaxReceiveBuffer = config.SmuxBuf
-		smuxConfig.KeepAliveInterval = time.Duration(config.KeepAlive) * time.Second
 
 		kcpraw.SetDSCP(config.DSCP)
 		kcpraw.SetNoHTTP(true)
@@ -425,38 +380,6 @@ func main() {
 	myApp.Run(os.Args)
 }
 
-type scavengeSession struct {
-	session *smux.Session
-	ts      time.Time
-}
-
-func scavenger(ch chan *smux.Session, ttl int) {
-	ticker := time.NewTicker(time.Second)
-	defer ticker.Stop()
-	var sessionList []scavengeSession
-	for {
-		select {
-		case sess := <-ch:
-			sessionList = append(sessionList, scavengeSession{sess, time.Now()})
-			log.Println("session marked as expired")
-		case <-ticker.C:
-			var newList []scavengeSession
-			for k := range sessionList {
-				s := sessionList[k]
-				if s.session.NumStreams() == 0 || s.session.IsClosed() {
-					log.Println("session normally closed")
-					s.session.Close()
-				} else if ttl >= 0 && time.Since(s.ts) >= time.Duration(ttl)*time.Second {
-					log.Println("session reached scavenge ttl")
-					s.session.Close()
-				} else {
-					newList = append(newList, sessionList[k])
-				}
-			}
-			sessionList = newList
-		}
-	}
-}
 
 func snmpLogger(path string, interval int) {
 	if path == "" || interval == 0 {

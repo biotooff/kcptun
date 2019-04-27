@@ -18,7 +18,6 @@ import (
 	"github.com/golang/snappy"
 	"github.com/urfave/cli"
 	kcp "github.com/xtaci/kcp-go"
-	"github.com/xtaci/smux"
 	"github.com/biotooff/kcp-go-raw"
 )
 
@@ -55,38 +54,6 @@ func newCompStream(conn net.Conn) *compStream {
 	c.w = snappy.NewBufferedWriter(conn)
 	c.r = snappy.NewReader(conn)
 	return c
-}
-
-// handle multiplex-ed connection
-func handleMux(conn io.ReadWriteCloser, config *Config) {
-	// stream multiplex
-	smuxConfig := smux.DefaultConfig()
-	smuxConfig.MaxReceiveBuffer = config.SmuxBuf
-	smuxConfig.KeepAliveInterval = time.Duration(config.KeepAlive) * time.Second
-
-	mux, err := smux.Server(conn, smuxConfig)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer mux.Close()
-	for {
-		stream, err := mux.AcceptStream()
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		go func(p1 *smux.Stream) {
-			p2, err := net.Dial("tcp", config.Target)
-			if err != nil {
-				p1.Close()
-				log.Println(err)
-				return
-			}
-			handleClient(p1, p2, config.Quiet)
-		}(stream)
-	}
 }
 
 func handleClient(p1, p2 io.ReadWriteCloser, quiet bool) {
@@ -128,7 +95,7 @@ func main() {
 	}
 	myApp := cli.NewApp()
 	myApp.Name = "kcptun"
-	myApp.Usage = "server(with SMUX)"
+	myApp.Usage = "server(single stream)"
 	myApp.Version = VERSION
 	myApp.Flags = []cli.Flag{
 		cli.StringFlag{
@@ -222,11 +189,6 @@ func main() {
 			Usage: "per-socket buffer in bytes",
 		},
 		cli.IntFlag{
-			Name:  "smuxbuf",
-			Value: 4194304,
-			Usage: "the overall de-mux buffer in bytes",
-		},
-		cli.IntFlag{
 			Name:  "keepalive",
 			Value: 10, // nat keepalive interval in seconds
 			Usage: "seconds between heartbeats",
@@ -280,7 +242,6 @@ func main() {
 		config.Resend = c.Int("resend")
 		config.NoCongestion = c.Int("nc")
 		config.SockBuf = c.Int("sockbuf")
-		config.SmuxBuf = c.Int("smuxbuf")
 		config.KeepAlive = c.Int("keepalive")
 		config.Log = c.String("log")
 		config.SnmpLog = c.String("snmplog")
@@ -365,7 +326,6 @@ func main() {
 		log.Println("acknodelay:", config.AckNodelay)
 		log.Println("dscp:", config.DSCP)
 		log.Println("sockbuf:", config.SockBuf)
-		log.Println("smuxbuf:", config.SmuxBuf)
 		log.Println("keepalive:", config.KeepAlive)
 		log.Println("snmplog:", config.SnmpLog)
 		log.Println("snmpperiod:", config.SnmpPeriod)
