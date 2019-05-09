@@ -352,7 +352,7 @@ func main() {
 		kcpraw.SetIgnRST(false)
 		kcpraw.SetDummy(true)
 
-		createKcpConn := func() (*kcp.UDPSession, error) {
+		createKcpConn := func() (io.ReadWriteCloser, error) {
 			kcpconn, err := kcpraw.DialWithOptions(config.RemoteAddr, block, config.DataShard, config.ParityShard, false)
 			if err != nil {
 				return nil, errors.Wrap(err, "createConn()")
@@ -363,7 +363,14 @@ func main() {
 			kcpconn.SetWindowSize(config.SndWnd, config.RcvWnd)
 			kcpconn.SetMtu(config.MTU)
 			kcpconn.SetACKNoDelay(config.AckNodelay)
+			if err != nil {
+				return nil, errors.Wrap(err, "createConn()")
+			}
 			log.Println("connection:", kcpconn.LocalAddr(), "->", kcpconn.RemoteAddr())
+
+			if !config.NoComp {
+				return newCompStream(kcpconn),nil
+			}
 			return kcpconn,nil
 		}
 		go snmpLogger(config.SnmpLog, config.SnmpPeriod)
