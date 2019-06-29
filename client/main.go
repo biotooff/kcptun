@@ -18,7 +18,7 @@ import (
 	"github.com/urfave/cli"
 	kcp "github.com/xtaci/kcp-go"
 	"github.com/xtaci/smux"
-	"github.com/biotooff/kcp-go-raw"
+	"github.com/biotooff/rawcon"
 	"path/filepath"
 )
 
@@ -27,6 +27,8 @@ var (
 	VERSION = "SELFBUILD"
 	// SALT is use for pbkdf2 key expansion
 	SALT = "kcp-go"
+	//
+	RAW rawcon.Raw
 )
 
 type compStream struct {
@@ -366,13 +368,14 @@ func main() {
 		smuxConfig.MaxReceiveBuffer = config.SmuxBuf
 		smuxConfig.KeepAliveInterval = time.Duration(config.KeepAlive) * time.Second
 
-		kcpraw.SetDSCP(config.DSCP)
-		kcpraw.SetNoHTTP(true)
-		kcpraw.SetIgnRST(false)
-		kcpraw.SetDummy(true)
+		RAW.DSCP=config.DSCP
+		RAW.NoHTTP=true
+		RAW.IgnRST=false
+		RAW.Dummy=true
 
 		createConn := func() (*smux.Session, error) {
-			kcpconn, err := kcpraw.DialWithOptions(config.RemoteAddr, block, config.DataShard, config.ParityShard, false)
+			rawconn, err := RAW.DialRAW(config.RemoteAddr)
+			kcpconn, err := kcp.NewConn(config.RemoteAddr, block, config.DataShard, config.ParityShard, rawconn)
 			if err != nil {
 				return nil, errors.Wrap(err, "createConn()")
 			}
