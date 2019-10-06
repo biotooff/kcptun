@@ -61,8 +61,11 @@ func newCompStream(conn net.Conn) *compStream {
 
 func handleClientSingleStream(p2 io.ReadWriteCloser, p1 io.ReadWriteCloser) {
 
-	defer p1.Close()
-	defer p2.Close()
+	defer func(){
+		p1.Close()
+	 	p2.Close()
+	 	fmt.Println("stream closed")
+	 }()
 
 	// start tunnel & wait for tunnel termination
 	streamCopy := func(dst io.Writer, src io.Reader) chan struct{} {
@@ -78,10 +81,8 @@ func handleClientSingleStream(p2 io.ReadWriteCloser, p1 io.ReadWriteCloser) {
 	d2:=streamCopy(p2, p1)
 
 	select {
-	case <-d1:
-	}
-	select {
-	case <-d2:
+		case <-d1:
+		case <-d2:
 	}
 }
 
