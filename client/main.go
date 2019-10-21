@@ -64,7 +64,7 @@ func handleClientSingleStream(p2 io.ReadWriteCloser, p1 io.ReadWriteCloser) {
 	defer func(){
 		p1.Close()
 	 	p2.Close()
-	 	fmt.Println("stream closed")
+	 	log.Println("stream closed")
 	 }()
 
 	// start tunnel & wait for tunnel termination
@@ -352,7 +352,7 @@ func main() {
 
 		RAW.DSCP=config.DSCP
 		RAW.NoHTTP=true
-		RAW.IgnRST=false
+		RAW.IgnRST=true
 		RAW.Dummy=true
 
 		createKcpConn := func() (io.ReadWriteCloser, error) {
