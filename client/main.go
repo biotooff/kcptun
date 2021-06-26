@@ -357,6 +357,9 @@ func main() {
 
 		createKcpConn := func() (io.ReadWriteCloser, error) {
 			rawconn, err := RAW.DialRAW(config.RemoteAddr)
+			if err != nil {
+				return nil, errors.Wrap(err, "raw create")
+			}
 			kcpconn, err := kcp.NewConn(config.RemoteAddr, block, config.DataShard, config.ParityShard, rawconn)
 			if err != nil {
 				return nil, errors.Wrap(err, "createConn()")

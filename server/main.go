@@ -18,7 +18,7 @@ import (
 	"github.com/golang/snappy"
 	"github.com/urfave/cli"
 	kcp "github.com/xtaci/kcp-go"
-	"github.com/biotooff/rawcon"
+	"github.com/xtaci/tcpraw"
 )
 
 var (
@@ -26,8 +26,6 @@ var (
 	VERSION = "SELFBUILD"
 	// SALT is use for pbkdf2 key expansion
 	SALT = "kcp-go"
-	//
-	RAW rawcon.Raw
 )
 
 type compStream struct {
@@ -310,12 +308,7 @@ func main() {
 			block, _ = kcp.NewAESBlockCrypt(pass)
 		}
 
-		RAW.DSCP=config.DSCP
-		RAW.NoHTTP=true
-		RAW.Mixed=false
-		RAW.IgnRST=false
-
-		rawconnlis, err := RAW.ListenRAW(config.Listen)
+		rawconnlis, err := tcpraw.Listen("tcp",config.Listen)
 		lis, err := kcp.ServeConn(block, config.DataShard, config.ParityShard,rawconnlis)
 		checkError(err)
 		log.Println("listening on:", lis.Addr())
@@ -367,9 +360,9 @@ func main() {
 				}
 
 				if config.NoComp {
-					go handleClient(conn, conn2Target,true)
+					go handleClient(conn, conn2Target, true)
 				} else {
-					go handleClient(newCompStream(conn), conn2Target,true)
+					go handleClient(newCompStream(conn), conn2Target, true)
 				}
 			} else {
 				log.Printf("%+v", err)
